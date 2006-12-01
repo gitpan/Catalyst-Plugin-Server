@@ -120,17 +120,9 @@ sub register {
     }
 
     $self->register_path( $c, $_, $action ) for @register;
-    $c->server->xmlrpc->dispatcher->{Path} = $self unless
-                scalar %{$c->server->xmlrpc->dispatcher};
 
-    ### Make sure we register our methods
-    $c->server->xmlrpc->add_private_method(
-            'system.listMethods' => sub {
-                        return [ keys %{$self->methods($c)} ];
-                }
-            ) unless $c->server->xmlrpc->private_methods->{
-                    'system.listMethods'
-                };
+    $c->server->xmlrpc->dispatcher->{Path} = $self
+        unless (scalar %{$c->server->xmlrpc->dispatcher});
 
     return 1 if @register;
     return 0;

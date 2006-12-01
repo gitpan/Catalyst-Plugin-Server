@@ -174,6 +174,20 @@ Allows you to set xmlrpc fault code and message
 
 =back
 
+=head1 Server Accessors
+
+The following accessors are always available, whether you're in a xmlrpc
+specific request or not
+
+=over 4
+
+=item $c->server->xmlrpc->list_methods
+
+Returns a HASHREF containing the available xmlrpc methods in Catalyst as
+a key, and the C<Catalyst::Action> object as a value.
+
+=back
+
 =head1 CATALYST REQUEST
 
 To make things transparent, we try to put XMLRPC params into the Request
@@ -384,13 +398,21 @@ Alias of $c->req->parameters
                     if ( $req_error && ref $req_error eq 'ARRAY' ) {
                          $res = RPC::XML::fault->new( @{ $req_error } );
                     } else {
-                         $res = RPC::XML::fault->new( -1, join $/, @{ $c->error } );
+                         $res = RPC::XML::fault->new( -1,
+                                join $/, @{ $c->error }
+                            );
                     }
                 } else {
                     if ( $req_error && ref $req_error eq 'ARRAY' ) {
                         $res = RPC::XML::fault->new( @{ $req_error } );
                     } else {
-                        $res = RPC::XML::fault->new( 500,  'Internal Server Error');
+                        $c->log->debug("XMLRPC 500 Errors:\n" .
+                                        join("\n", @{ $c->error })
+                                    );
+                        $res = RPC::XML::fault->new(
+                                            500,
+                                            'Internal Server Error'
+                                        );
                     }
                 }
             } else {
@@ -442,6 +464,16 @@ Alias of $c->req->parameters
         $self->private_methods({});
         $self->dispatcher({});
 
+        ### Internal function
+        $self->add_private_method(
+            'system.listMethods' => sub {
+                my ($c_ob, @args) = @_;
+                return [ keys %{
+                    $c_ob->server->xmlrpc->list_methods;
+                    } ];
+            }
+        );
+
         return $self;
     }
 
@@ -451,6 +483,11 @@ Alias of $c->req->parameters
         return unless ($name && UNIVERSAL::isa($sub,'CODE'));
         $self->private_methods->{$name} = $sub;
         return 1;
+    }
+
+    sub list_methods {
+        my ($self) = @_;
+        return $self->dispatcher->{Path}->methods($self->c);
     }
 }
 
@@ -659,6 +696,18 @@ Alias of $c->req->parameters
 
 __END__
 
+=head1 INTERNAL XMLRPC FUNCTIONS
+
+The following system functions are available to the public.,
+
+=over 4
+
+=item system.listMethods
+
+returns a list of available RPC methods.
+
+=back
+
 =head1 DEFINING RETURN VALUES
 
 The XML-RPC response must contain a single parameter, which may contain
@@ -773,6 +822,8 @@ Just like the error messages, it would be nice to be able to filter the
 stash before returning so you can filter out keys you don't want to 
 return to the client, or just return a certain list of keys. 
 This all to make transparent use of XMLRPC and web easier.
+
+=back
 
 =head1 SEE ALSO
 

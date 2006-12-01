@@ -5,7 +5,7 @@
     use warnings;
     use base qw/Class::Data::Inheritable/;
 
-    our $VERSION = '0.20';
+    our $VERSION = '0.22';
 
     my $ReqClass = 'Catalyst::Plugin::Server::Request';
 

@@ -6,7 +6,7 @@ use Text::SimpleTable;
 
 =head1 NAME
 
-Catalyst::Plugin::Server::XMLRPC::DispatchType::RemoteRegex - RemoteRegex DispatchType
+Catalyst::Plugin::Server::XMLRPC::DispatchType::XMLRPCRegex - XMLRPCRegex DispatchType
 
 =head1 SYNOPSIS
 
