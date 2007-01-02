@@ -25,8 +25,6 @@ my @Methods     = qw[a 1];
     
 
 # init -- mention var twice due to warnings;
-$RPC::XML::ENCODING = $RPC::XML::ENCODING = 'UTF-8';
-
 for my $meth ( @Methods ) {
 
     my $str = RPC::XML::request->new( $meth )->as_string;

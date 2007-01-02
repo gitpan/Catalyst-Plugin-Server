@@ -285,7 +285,7 @@ Alias of $c->req->parameters
 
         ### set up the accessor to hold an xmlrpc server instance
         $c->req->register_server(
-            'xmlrpc' => Catalyst::Plugin::Server::XMLRPC::Request->new($c)
+            'xmlrpc' => Catalyst::Plugin::Server::XMLRPC::Request->new()
         );
 
         ### are we an xmlrpc call? check the path against a regex
@@ -505,7 +505,9 @@ Alias of $c->req->parameters
     ### XXX add: stash_fields (to encode) stash_exclude_fields (grep -v)
 
     __PACKAGE__->mk_accessors(
-        qw[ path prefix seperator attribute convert_params show_errors]
+        qw/ path prefix seperator attribute convert_params
+            show_errors xml_encoding
+        /
     );
 
     ### return the cached version where possible
@@ -522,6 +524,8 @@ Alias of $c->req->parameters
         $self->path(     $c->config->{xmlrpc}->{path}      || $DefaultPath);
         $self->show_errors( $c->config->{xmlrpc}->{show_errors}
                                 || $DefaultShowErrors );
+        $self->xml_encoding( $c->config->{xmlrpc}->{xml_encoding} )
+                if $c->config->{xmlrpc}->{xml_encoding};
         $self->attribute($DefaultAttr);
         $self->convert_params( 1 );
 
@@ -564,6 +568,9 @@ Alias of $c->req->parameters
 
     sub _deserialize_xml {
         my ($self, $c) = @_;
+
+        local $RPC::XML::ENCODING = $c->server->xmlrpc->config->xml_encoding
+                if $c->server->xmlrpc->config->xml_encoding;
 
         ### the parser will die on failure, make sure we catch it
         my $content; my $req;
@@ -784,6 +791,13 @@ fault, it will return an XML-RPC fault containing error number 500 and error
 string: "Internal Server Error".
 
 Defaults to false.
+
+=item xml_encoding
+
+Change the xml encoding send over to the client. So you could change the
+default encoding to C<UTF-8> for instance.
+
+Defaults to C<us-ascii> which is the default of C<RPC::XML>.
 
 =back
 

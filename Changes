@@ -1,5 +1,10 @@
 Revision history for Perl extension Catalyst::Plugin::XMLRPC
 
+0.24  Tue Jan  2 16:26:59 CET 2007
+        - Removed circular reference which caused memory leak
+          in XMLRPC::Request object
+        - Added config option for changing the default RPC::XML::Encoding
+
 0.22  Fri Dec  1 14:59:13 CET 2006
         - Moved system.listMethods to XMLRPC
         - Fixed stupid subref in system.listMethods
