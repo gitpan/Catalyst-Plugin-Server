@@ -56,6 +56,16 @@ server startup as follows:
     | .                         | /dispatcher                      |
     '---------------------------+----------------------------------'
 
+B<IMPORTANT>: Newer versions of Catalyst add a forward to a default view when
+no response body has been defined yet, which interferes with this plugin.
+To fix this, look for the following line in your Root controller:
+
+  sub end : ActionClass('RenderView') {}
+
+And simply comment it out:
+
+  #sub end : ActionClass('RenderView') {}
+
 =head3 Handling incoming method calls
 
 A user could now post to your XMLRPC server as follows, with the

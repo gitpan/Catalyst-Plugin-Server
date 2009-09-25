@@ -172,6 +172,14 @@ The XML body that will be sent back to the XMLRPC client
 
 Allows you to set xmlrpc fault code and message
 
+Example:
+
+  $c->req->xmlrpc->error( [ 401 => 'Unauthorized' ] )
+
+To return status code C<401> with message C<Unauthorized>
+
+The default is to return error code C<500> on error.
+
 =back
 
 =head1 Server Accessors
@@ -242,7 +250,7 @@ Alias of $c->req->parameters
     use strict;
     use warnings;
     use attributes ();
-
+    use MRO::Compat;
     use Data::Dumper;
 
     my $ServerClass = 'Catalyst::Plugin::Server::XMLRPC::Backend';
@@ -505,7 +513,7 @@ Alias of $c->req->parameters
     ### XXX add: stash_fields (to encode) stash_exclude_fields (grep -v)
 
     __PACKAGE__->mk_accessors(
-        qw/ path prefix seperator attribute convert_params
+        qw/ path prefix separator attribute convert_params
             show_errors xml_encoding
         /
     );
@@ -520,7 +528,7 @@ Alias of $c->req->parameters
         my $self  = $class->SUPER::new;
 
         $self->prefix(   $c->config->{xmlrpc}->{prefix}    || $DefaultPrefix);
-        $self->seperator($c->config->{xmlrpc}->{seperator} || $DefaultSep);
+        $self->separator($c->config->{xmlrpc}->{separator} || $DefaultSep);
         $self->path(     $c->config->{xmlrpc}->{path}      || $DefaultPath);
         $self->show_errors( $c->config->{xmlrpc}->{show_errors}
                                 || $DefaultShowErrors );
@@ -568,9 +576,6 @@ Alias of $c->req->parameters
 
     sub _deserialize_xml {
         my ($self, $c) = @_;
-
-        local $RPC::XML::ENCODING = $c->server->xmlrpc->config->xml_encoding
-                if $c->server->xmlrpc->config->xml_encoding;
 
         ### the parser will die on failure, make sure we catch it
         my $content; my $req;
@@ -620,7 +625,7 @@ Alias of $c->req->parameters
                 my $prefix  = $c->server->xmlrpc->config->prefix;
                 my ($sep)   = map { qr/$_/ }
                               map { quotemeta $_ }
-                                        $c->server->xmlrpc->config->seperator;
+                                        $c->server->xmlrpc->config->separator;
 
                 ### error checks here
                 if( $prefix =~ m|^/| ) {
@@ -630,7 +635,7 @@ Alias of $c->req->parameters
                 }
 
                 unless( UNIVERSAL::isa( $sep, 'Regexp' ) ) {
-                    $c->log->debug( __PACKAGE__ . ": Your seperator is not a ".
+                    $c->log->debug( __PACKAGE__ . ": Your separator is not a ".
                                     "Regexp object -- This is not recommended"
                                 ) if $c->debug;
                 }
@@ -682,6 +687,10 @@ Alias of $c->req->parameters
     ### Serializes the response to $c->res->body
     sub _serialize_xmlrpc {
         my ( $self, $c, $status ) = @_;
+
+        local $RPC::XML::ENCODING = $c->server->xmlrpc->config->xml_encoding
+                if $c->server->xmlrpc->config->xml_encoding;
+
         my $res = RPC::XML::response->new($status);
 
         $c->res->content_type('text/xml');
@@ -765,14 +774,14 @@ path would be come C</rpc/foo>.
 
 The default is '' (empty).
 
-=item seperator
+=item separator
 
 This is a STRING used to split your method on, allowing you to use
 a hierarchy in your method calls.
 
-For example, with a seperator of C<.> the method call C<demo.echo>
+For example, with a separator of C<.> the method call C<demo.echo>
 would be forwarded to C</demo/echo>.  To make C<demo_echo> forward to the
-same path, you would change the seperator to C<_>,
+same path, you would change the separator to C<_>,
 
 The default is C<.>, splitting methods on a single C<.>
 

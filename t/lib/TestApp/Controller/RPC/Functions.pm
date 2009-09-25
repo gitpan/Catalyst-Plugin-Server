@@ -1,4 +1,4 @@
-package TestApp::Controller::RPC::Functions;
+﻿package TestApp::Controller::RPC::Functions;
 
 use strict;
 use base 'Catalyst::Controller';
@@ -33,7 +33,10 @@ sub echo_plain_stash : XMLRPCLocal {
     $c->stash->{'function'} = 'echo_plain_stash';
 }
 
-
+sub echo_unicode: XMLRPCLocal {
+    my ($self, $c, %args) = @_;
+    $c->stash->{'xmlrpc'} = '私はクリスです'
+}
 
 sub echo_path : XMLRPCPath('/rpc/functions/echo/path') {
     my ($self, $c, %args) = @_;

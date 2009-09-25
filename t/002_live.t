@@ -1,4 +1,4 @@
-#!perl
+﻿#!perl
 
 use strict;
 use warnings;
@@ -26,9 +26,11 @@ my %RpcArgs     = ( 1 => "b" );
 my %RpcRv       = ( auto => 1, begin => 1, end => 1 );
 my $EntryPoint  = 'http://localhost/rpc';
 my $Prefix      = 'rpc.functions.';
+
 my %Methods     = (
     # method name       # rv
     'echo.regex'        => 'echo_regex',
+    'echo_unicode'      => do { utf8::decode( my $x = '私はクリスです' ); $x },
     'echo_plain'        => 'echo_plain', 
     'echo.path'         => 'echo_path',
 
