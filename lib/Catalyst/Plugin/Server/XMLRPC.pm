@@ -268,7 +268,7 @@ Alias of $c->req->parameters
         $class->server->register_server(
                     'xmlrpc' => $ServerClass->new($class)
                 );
-        $class->NEXT::setup_engine(@_);
+        $class->next::method(@_);
     }
 
     ### Will load our customized DispatchTypes into Catalyst
@@ -276,7 +276,7 @@ Alias of $c->req->parameters
         my $class = shift;
 
         ### Load custom DispatchTypes
-        $class->NEXT::setup_dispatcher( @_ );
+        $class->next::method( @_ );
         $class->dispatcher->preload_dispatch_types(
             @{$class->dispatcher->preload_dispatch_types},
             qw/ +Catalyst::Plugin::Server::XMLRPC::DispatchType::XMLRPCPath
@@ -324,19 +324,16 @@ Alias of $c->req->parameters
 
                     $c->dispatcher->dispatch_types(
                         [ grep {
-                            UNIVERSAL::isa(
-                                    $_, $dp_ns . 'XMLRPCPath'
-                                ) or
-                            UNIVERSAL::isa(
-                                    $_, $dp_ns . 'XMLRPCRegex'
-                                )
+                                $_->isa($dp_ns . 'XMLRPCPath')
+                                or
+                                $_->isa($dp_ns . 'XMLRPCRegex')
                             } @$saved_dt
                         ]
                     );
 
                     ### run the rest of the prepare actions, we should have
                     ### an action object now
-                    $c->NEXT::prepare_action( @_ );
+                    $c->next::method( @_ );
 
                     ### restore the saved dispatchtypes
                     $c->dispatcher->dispatch_types( $saved_dt );
@@ -367,7 +364,7 @@ Alias of $c->req->parameters
 
         ### we're no xmlrpc request, so just let others handle it
         } else {
-            $c->NEXT::prepare_action( @_ );
+            $c->next::method( @_ );
         }
     }
 
@@ -386,7 +383,7 @@ Alias of $c->req->parameters
         ) {
                 $c->req->xmlrpc->run_method($c);
         } else {
-            $c->NEXT::dispatch( @_ );
+            $c->next::method( @_ );
         }
     }
 
@@ -444,7 +441,7 @@ Alias of $c->req->parameters
 
         ### always call finalize at the end, so Catalyst's final handler
         ### gets called as well
-        $c->NEXT::finalize( @_ );
+        $c->next::method( @_ );
     }
 }
 
@@ -453,6 +450,7 @@ Alias of $c->req->parameters
 
     use base qw/Class::Accessor::Fast/;
     use Data::Dumper;
+    use Scalar::Util 'reftype';
 
     __PACKAGE__->mk_accessors( qw/
                                     dispatcher
@@ -465,7 +463,7 @@ Alias of $c->req->parameters
     sub new {
         my $class = shift;
         my $c = shift;
-        my $self = $class->SUPER::new( @_ );
+        my $self = $class->next::method( @_ );
 
         $self->c($c);
         $self->config( Catalyst::Plugin::Server::XMLRPC::Config->new( $c ) );
@@ -488,7 +486,7 @@ Alias of $c->req->parameters
     sub add_private_method {
         my ($self, $name, $sub) = @_;
 
-        return unless ($name && UNIVERSAL::isa($sub,'CODE'));
+        return unless ($name && (reftype($sub) eq 'CODE'));
         $self->private_methods->{$name} = $sub;
         return 1;
     }
@@ -525,7 +523,7 @@ Alias of $c->req->parameters
 
         my $class = shift;
         my $c     = shift;
-        my $self  = $class->SUPER::new;
+        my $self  = $class->next::method;
 
         $self->prefix(   $c->config->{xmlrpc}->{prefix}    || $DefaultPrefix);
         $self->separator($c->config->{xmlrpc}->{separator} || $DefaultSep);
@@ -550,6 +548,8 @@ Alias of $c->req->parameters
 
     use RPC::XML;
     use RPC::XML::Parser;
+    use Scalar::Util 'reftype';
+    use Clone::Fast qw/clone/;
 
     use Data::Dumper;
     use Text::SimpleTable;
@@ -614,11 +614,10 @@ Alias of $c->req->parameters
             ### then we can assume it's key => value pairs in there
             ### and we will map them to $c->req->params
             $self->params(
-                @args == 1 && UNIVERSAL::isa($args[0], 'HASH')
+                (@args == 1 && (reftype($args[0]) eq 'HASH'))
                     ? $args[0]
                     : {}
             );
-
             ### build the relevant namespace, action and path 
             {   ### construct the forward path -- this allows catalyst to
                 ### do the hard work of dispatching for us
@@ -634,7 +633,7 @@ Alias of $c->req->parameters
                                 ) if $c->debug;
                 }
 
-                unless( UNIVERSAL::isa( $sep, 'Regexp' ) ) {
+                unless( ref($sep) eq 'Regexp' ) {
                     $c->log->debug( __PACKAGE__ . ": Your separator is not a ".
                                     "Regexp object -- This is not recommended"
                                 ) if $c->debug;
@@ -690,9 +689,10 @@ Alias of $c->req->parameters
 
         local $RPC::XML::ENCODING = $c->server->xmlrpc->config->xml_encoding
                 if $c->server->xmlrpc->config->xml_encoding;
+        
+        local $Clone::Fast::BREAK_REFS = 1;
 
-        my $res = RPC::XML::response->new($status);
-
+        my $res = RPC::XML::response->new(clone($status));
         $c->res->content_type('text/xml');
 
         return $self->result_as_string( $res->as_string );
@@ -864,9 +864,13 @@ Yoshinori Sano
 
 =head1 AUTHORS
 
-Jos Boumans (kane@cpan.org)
+Original Authors: Jos Boumans (kane@cpan.org) and Michiel Ootjers (michiel@cpan.org)
 
-Michiel Ootjers (michiel@cpan.org)
+Actually maintained by Jose Luis Martinez Torres JLMARTIN (jlmartinez@capside.com)
+
+=head1 THANKS
+
+Tomas Doran (BOBTFISH) for helping out with the debugging
 
 =head1 BUG REPORTS
 

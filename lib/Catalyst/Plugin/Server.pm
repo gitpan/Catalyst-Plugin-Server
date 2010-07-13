@@ -6,7 +6,7 @@
     use base qw/Class::Data::Inheritable/;
     use MRO::Compat;
 
-    our $VERSION = '0.26';
+    our $VERSION = '0.28';
 
     my $ReqClass = 'Catalyst::Plugin::Server::Request';
 
@@ -14,7 +14,7 @@
 
     sub setup_dispatcher {
         my $class = shift;
-        $class->NEXT::setup_dispatcher(@_);
+        $class->next::method(@_);
 
         ### Load Server class
         $class->server(Catalyst::Plugin::Server::Backend->new($class));
@@ -28,11 +28,11 @@
 
         ### since we have a custom request class now, we have to
         ### be sure no one changed it from underneath us!
-        unless( UNIVERSAL::isa( $c->req, $ReqClass ) ) {
+        unless( $c->req->isa($ReqClass) ) {
             $c->log->warn(  "Request class no longer inherits from " .
                             "$ReqClass -- this may break things!" );
         }
-        $c->NEXT::prepare_action( @_ );
+        $c->next::method( @_ );
     }
 }
 
@@ -46,7 +46,7 @@
     sub new {
         my $class = shift;
         my $c = shift;
-        my $self = $class->SUPER::new( @_ );
+        my $self = $class->next::method( @_ );
     }
 
     sub register_server {
@@ -109,9 +109,13 @@ C<bin/rpc_client>
 
 =head1 AUTHORS
 
-Jos Boumans (kane@cpan.org)
+Original Authors: Jos Boumans (kane@cpan.org) and Michiel Ootjers (michiel@cpan.org)
 
-Michiel Ootjers (michiel@cpan.org)
+Actually maintained by Jose Luis Martinez Torres JLMARTIN (jlmartinez@capside.com)
+
+=head1 THANKS
+
+Tomas Doran (BOBTFISH) for helping out with the debugging
 
 =head1 BUG REPORTS
 
